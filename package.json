@@ -1,0 +1,12 @@
+{
+  "name": "test-repo-accessibility",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@axe-core/cli": "^4.6.0"
+  },
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "audit": "npx @axe-core/cli http://127.0.0.1:8000"
+  }
+}

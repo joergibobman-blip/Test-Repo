@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <div class="game-panel">
-        <h1>Neon Tetris</h1>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <main id="main" class="app-shell">
+      <section class="game-panel" aria-labelledby="game-title">
+        <h1 id="game-title">Neon Tetris</h1>
         <div class="hud">
           <div class="stat-card">
             <span class="label">Score</span>
@@ -20,28 +21,31 @@
             <span id="lines">0</span>
           </div>
         </div>
-        <canvas id="board" width="300" height="600"></canvas>
-        <div class="controls">
+        <div class="board-wrapper">
+          <canvas id="board" aria-label="Tetris board"></canvas>
+        </div>
+        <div class="controls" aria-live="polite">
+          <button id="themeBtn" type="button" aria-label="Toggle color theme">🌙 Dark</button>
           <button id="startBtn">Start / Restart</button>
           <p>Use arrow keys to move and rotate.</p>
         </div>
-      </div>
-      <div class="side-panel">
+      </section>
+      <aside class="side-panel" aria-label="Game information">
         <div class="preview-card">
           <h2>Next</h2>
-          <canvas id="next" width="180" height="180"></canvas>
+          <canvas id="next" width="180" height="180" aria-label="Next piece preview"></canvas>
         </div>
         <div class="info-card">
           <h2>How to play</h2>
           <ul>
-            <li>Left / Right: move piece</li>
-            <li>Down: soft drop</li>
-            <li>Up: rotate</li>
-            <li>Space: hard drop</li>
+            <li>Left / Right arrows: move piece</li>
+            <li>Down arrow: soft drop</li>
+            <li>Up arrow: rotate</li>
+            <li>Space bar: hard drop</li>
           </ul>
         </div>
-      </div>
-    </div>
+      </aside>
+    </main>
     <script src="game.js"></script>
   </body>
 </html>

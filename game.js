@@ -2,14 +2,30 @@ const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next');
 const nextCtx = nextCanvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const linesEl = document.getElementById('lines');
-const startBtn = document.getElementById('startBtn');
 
 const COLS = 10;
 const ROWS = 20;
-const BLOCK_SIZE = 30;
+let blockSize = 30;
 const EMPTY = 0;
+
+function resizeCanvas() {
+  const maxBoardWidth = Math.min(window.innerWidth * 0.55, 420);
+  const maxBoardHeight = Math.min(window.innerHeight * 0.84, 760);
+  const targetWidth = Math.min(maxBoardWidth, maxBoardHeight / 2);
+  blockSize = Math.max(18, Math.floor(targetWidth / COLS));
+  canvas.width = blockSize * COLS;
+  canvas.height = blockSize * ROWS;
+}
+resizeCanvas();
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  draw();
+});
+const scoreEl = document.getElementById('score');
+const linesEl = document.getElementById('lines');
+const startBtn = document.getElementById('startBtn');
+const themeBtn = document.getElementById('themeBtn');
+const rootElement = document.documentElement;
 
 const SHAPES = [
   { color: '#00f0ff', matrix: [[1, 1, 1, 1]] },
@@ -103,6 +119,21 @@ function resetGame() {
 function updateHud() {
   scoreEl.textContent = score;
   linesEl.textContent = lines;
+}
+
+function applyTheme(theme) {
+  const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+  rootElement.setAttribute('data-theme', resolvedTheme);
+  localStorage.setItem('neon-tetris-theme', resolvedTheme);
+  if (themeBtn) {
+    themeBtn.textContent = resolvedTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+    themeBtn.setAttribute('aria-pressed', String(resolvedTheme === 'light'));
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('neon-tetris-theme');
+  applyTheme(savedTheme || 'dark');
 }
 
 function collide(piece, xOffset = 0, yOffset = 0) {
@@ -203,7 +234,7 @@ function drawCell(x, y, color) {
   ctx.fillStyle = color;
   ctx.shadowBlur = 12;
   ctx.shadowColor = color;
-  ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+  ctx.fillRect(x * blockSize + 2, y * blockSize + 2, blockSize - 4, blockSize - 4);
   ctx.shadowBlur = 0;
 }
 
@@ -212,7 +243,7 @@ function drawBoard() {
   ctx.fillStyle = '#060816';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   for (let y = 0; y < ROWS; y += 1) {
-    for (let x = 0, cell = board[y][x]; x < COLS; x += 1) {
+    for (let x = 0; x < COLS; x += 1) {
       if (board[y][x] !== EMPTY) drawCell(x, y, board[y][x]);
     }
   }
@@ -296,7 +327,14 @@ function handleKeydown(event) {
 }
 
 startBtn.addEventListener('click', resetGame);
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    const nextTheme = rootElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(nextTheme);
+  });
+}
 document.addEventListener('keydown', handleKeydown);
 
+initTheme();
 resetGame();
 requestAnimationFrame(tick);
