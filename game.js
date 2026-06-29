@@ -2,6 +2,21 @@ const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next');
 const nextCtx = nextCanvas.getContext('2d');
+
+function resizeCanvas() {
+  const maxBoardWidth = Math.min(window.innerWidth * 0.55, 420);
+  const maxBoardHeight = Math.min(window.innerHeight * 0.84, 760);
+  const boardWidth = Math.min(maxBoardWidth, maxBoardHeight / 2);
+  const boardHeight = boardWidth * 2;
+  canvas.width = boardWidth;
+  canvas.height = boardHeight;
+}
+
+resizeCanvas();
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  draw();
+});
 const scoreEl = document.getElementById('score');
 const linesEl = document.getElementById('lines');
 const startBtn = document.getElementById('startBtn');
