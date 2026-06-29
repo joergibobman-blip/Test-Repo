@@ -1,0 +1,31 @@
+name: Accessibility Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - '**/*.{html,htm,css,js,md}'
+
+jobs:
+  axe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start local server
+        run: |
+          python -m http.server 8000 &
+          # give server a moment to start
+          sleep 2
+
+      - name: Run axe-core CLI
+        run: |
+          # Use the axe-core CLI to audit the served site
+          npx -y @axe-core/cli http://127.0.0.1:8000 --save axe-results.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: axe-results
+          path: axe-results.json
