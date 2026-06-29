@@ -5,6 +5,27 @@
   --accent: #00f0ff;
   --accent-2: #ff2bd6;
   --text: #f1f3ff;
+  --surface: rgba(17, 23, 45, 0.95);
+  --surface-strong: rgba(255, 255, 255, 0.05);
+  --border: rgba(0, 240, 255, 0.24);
+  --shadow: rgba(0, 240, 255, 0.16);
+  --board-bg: linear-gradient(180deg, #0c1227, #05070f);
+  --button-text: #060816;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f7ff;
+  --panel: #ffffff;
+  --accent: #0a6cff;
+  --accent-2: #d946ef;
+  --text: #14213d;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-strong: rgba(10, 108, 255, 0.08);
+  --border: rgba(10, 108, 255, 0.2);
+  --shadow: rgba(10, 108, 255, 0.12);
+  --board-bg: linear-gradient(180deg, #eef4ff, #dfe9ff);
+  --button-text: #ffffff;
 }
 
 * {
@@ -20,12 +41,13 @@ body {
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: radial-gradient(circle at top, #14213f, var(--bg));
+  background: radial-gradient(circle at top, rgba(20, 33, 63, 0.35), var(--bg));
   color: var(--text);
   display: grid;
   place-items: center;
   padding: 12px;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-shell {
@@ -41,9 +63,9 @@ body {
 .game-panel,
 .preview-card,
 .info-card {
-  background: rgba(17, 23, 45, 0.95);
-  border: 1px solid rgba(0, 240, 255, 0.24);
-  box-shadow: 0 0 24px rgba(0, 240, 255, 0.16);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 24px var(--shadow);
   border-radius: 18px;
   padding: 20px;
 }
@@ -63,7 +85,7 @@ h2 {
 
 .stat-card {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-strong);
   border-radius: 12px;
   padding: 10px 12px;
   display: flex;
@@ -82,7 +104,7 @@ h2 {
   max-width: 100%;
   display: block;
   border-radius: 12px;
-  background: linear-gradient(180deg, #0c1227, #05070f);
+  background: var(--board-bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -98,6 +120,10 @@ h2 {
 
 .controls {
   margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 button {
@@ -105,10 +131,17 @@ button {
   border-radius: 999px;
   padding: 10px 16px;
   font-weight: 700;
-  color: var(--bg);
+  color: var(--button-text);
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   cursor: pointer;
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover,
+button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
 }
 
 button:focus,

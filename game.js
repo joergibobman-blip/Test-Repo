@@ -24,6 +24,8 @@ window.addEventListener('resize', () => {
 const scoreEl = document.getElementById('score');
 const linesEl = document.getElementById('lines');
 const startBtn = document.getElementById('startBtn');
+const themeBtn = document.getElementById('themeBtn');
+const rootElement = document.documentElement;
 
 const SHAPES = [
   { color: '#00f0ff', matrix: [[1, 1, 1, 1]] },
@@ -117,6 +119,21 @@ function resetGame() {
 function updateHud() {
   scoreEl.textContent = score;
   linesEl.textContent = lines;
+}
+
+function applyTheme(theme) {
+  const resolvedTheme = theme === 'light' ? 'light' : 'dark';
+  rootElement.setAttribute('data-theme', resolvedTheme);
+  localStorage.setItem('neon-tetris-theme', resolvedTheme);
+  if (themeBtn) {
+    themeBtn.textContent = resolvedTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+    themeBtn.setAttribute('aria-pressed', String(resolvedTheme === 'light'));
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('neon-tetris-theme');
+  applyTheme(savedTheme || 'dark');
 }
 
 function collide(piece, xOffset = 0, yOffset = 0) {
@@ -310,7 +327,14 @@ function handleKeydown(event) {
 }
 
 startBtn.addEventListener('click', resetGame);
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    const nextTheme = rootElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(nextTheme);
+  });
+}
 document.addEventListener('keydown', handleKeydown);
 
+initTheme();
 resetGame();
 requestAnimationFrame(tick);
