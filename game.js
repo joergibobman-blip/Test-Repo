@@ -3,15 +3,19 @@ const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next');
 const nextCtx = nextCanvas.getContext('2d');
 
+const COLS = 10;
+const ROWS = 20;
+let blockSize = 30;
+const EMPTY = 0;
+
 function resizeCanvas() {
   const maxBoardWidth = Math.min(window.innerWidth * 0.55, 420);
   const maxBoardHeight = Math.min(window.innerHeight * 0.84, 760);
-  const boardWidth = Math.min(maxBoardWidth, maxBoardHeight / 2);
-  const boardHeight = boardWidth * 2;
-  canvas.width = boardWidth;
-  canvas.height = boardHeight;
+  const targetWidth = Math.min(maxBoardWidth, maxBoardHeight / 2);
+  blockSize = Math.max(18, Math.floor(targetWidth / COLS));
+  canvas.width = blockSize * COLS;
+  canvas.height = blockSize * ROWS;
 }
-
 resizeCanvas();
 window.addEventListener('resize', () => {
   resizeCanvas();
@@ -20,11 +24,6 @@ window.addEventListener('resize', () => {
 const scoreEl = document.getElementById('score');
 const linesEl = document.getElementById('lines');
 const startBtn = document.getElementById('startBtn');
-
-const COLS = 10;
-const ROWS = 20;
-const BLOCK_SIZE = 30;
-const EMPTY = 0;
 
 const SHAPES = [
   { color: '#00f0ff', matrix: [[1, 1, 1, 1]] },
@@ -218,7 +217,7 @@ function drawCell(x, y, color) {
   ctx.fillStyle = color;
   ctx.shadowBlur = 12;
   ctx.shadowColor = color;
-  ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+  ctx.fillRect(x * blockSize + 2, y * blockSize + 2, blockSize - 4, blockSize - 4);
   ctx.shadowBlur = 0;
 }
 
@@ -227,7 +226,7 @@ function drawBoard() {
   ctx.fillStyle = '#060816';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   for (let y = 0; y < ROWS; y += 1) {
-    for (let x = 0, cell = board[y][x]; x < COLS; x += 1) {
+    for (let x = 0; x < COLS; x += 1) {
       if (board[y][x] !== EMPTY) drawCell(x, y, board[y][x]);
     }
   }
