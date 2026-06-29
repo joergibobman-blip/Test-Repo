@@ -6,7 +6,7 @@ const scoreEl = document.getElementById('score');
 const linesEl = document.getElementById('lines');
 const startBtn = document.getElementById('startBtn');
 
-const COLS = 10;
+const COLS = 10; 
 const ROWS = 20;
 const BLOCK_SIZE = 30;
 const EMPTY = 0;
