@@ -111,6 +111,29 @@ button {
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
 }
 
+button:focus,
+a:focus {
+  outline: 3px solid rgba(0, 240, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 240, 255, 0.95);
+  color: #060816;
+  border-radius: 8px;
+  transform: translateY(-120%);
+  transition: transform 0.2s ease;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 .side-panel {
   display: grid;
   gap: 16px;
