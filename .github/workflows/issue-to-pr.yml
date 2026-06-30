@@ -5,93 +5,47 @@ on:
     types: [opened, edited]
 
 permissions:
+  actions: write
   contents: write
+  issues: write
   pull-requests: write
 
 jobs:
-  create-branch-and-pr:
+  assign-issue-to-copilot:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create branch from issue
-        id: create-branch
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-        run: |
-          # Sanitise the issue title for use as a branch name
-          SANITISED=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-50)
-          BRANCH="issue-${ISSUE_NUMBER}/${SANITISED}"
-          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
-
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Only create the branch if it does not already exist
-          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
-            echo "Branch '${BRANCH}' already exists."
-            # Fetch the branch and check whether it has any commits ahead of the current HEAD
-            git fetch origin "$BRANCH"
-            AHEAD=$(git rev-list --count "HEAD..FETCH_HEAD")
-            if [ "$AHEAD" -eq 0 ]; then
-              echo "Branch has no commits ahead of main – adding an initial commit."
-              git checkout -b "$BRANCH" FETCH_HEAD
-              git commit --allow-empty -m "chore: initialise branch for issue #${ISSUE_NUMBER}"
-              git push origin "$BRANCH"
-            fi
-          else
-            git checkout -b "$BRANCH"
-            git commit --allow-empty -m "chore: initialise branch for issue #${ISSUE_NUMBER}"
-            git push origin "$BRANCH"
-            echo "Branch '${BRANCH}' created and pushed."
-          fi
-
-      - name: Create or update pull request
+      - name: Assign issue to Copilot cloud agent
         uses: actions/github-script@v7
-        env:
-          BRANCH: ${{ steps.create-branch.outputs.branch }}
         with:
+          github-token: ${{ secrets.COPILOT_ASSIGN_TOKEN || github.token }}
           script: |
-            const { data: issue } = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo:  context.repo.repo,
-              issue_number: context.issue.number,
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue = context.payload.issue;
+            const baseBranch = context.payload.repository.default_branch;
+            const action = context.payload.action;
+
+            const customInstructions = [
+              'Use the issue title and body as the source of truth for the requested work.',
+              'Apply the requested repository changes instead of only copying the issue text into a branch or pull request.',
+              'Keep the change focused and minimal.',
+              'Open or update a draft pull request that references the issue once the requested changes are implemented.',
+              action === 'edited'
+                ? 'This issue was edited. Refresh the implementation so it matches the latest issue title and body.'
+                : 'This is a newly opened issue. Start from the current default branch and implement the request.',
+            ].join('\n');
+
+            await github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+              owner,
+              repo,
+              issue_number: issue.number,
+              assignees: ['copilot-swe-agent[bot]'],
+              agent_assignment: {
+                target_repo: `${owner}/${repo}`,
+                base_branch: baseBranch,
+                custom_instructions: customInstructions,
+                model: '',
+              },
             });
 
-            const branch     = process.env.BRANCH;
-            const base       = context.payload.repository.default_branch;
-            const prTitle    = `[Issue #${issue.number}] ${issue.title}`;
-            const prBody     = `Closes #${issue.number}\n\n---\n\n${issue.body ?? ''}`;
-
-            // Check whether a PR already exists for this branch
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo:  context.repo.repo,
-              head:  `${context.repo.owner}:${branch}`,
-              state: 'open',
-            });
-
-            if (prs.length > 0) {
-              // Update the existing PR title/body to reflect any edits to the issue
-              await github.rest.pulls.update({
-                owner:        context.repo.owner,
-                repo:         context.repo.repo,
-                pull_number:  prs[0].number,
-                title:        prTitle,
-                body:         prBody,
-              });
-              core.info(`Updated existing PR #${prs[0].number}`);
-            } else {
-              const { data: pr } = await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo:  context.repo.repo,
-                title: prTitle,
-                body:  prBody,
-                head:  branch,
-                base:  base,
-                draft: true,
-              });
-              core.info(`Created PR #${pr.number}: ${pr.html_url}`);
-            }
+            core.info(`Assigned issue #${issue.number} to Copilot cloud agent on ${baseBranch}`);
