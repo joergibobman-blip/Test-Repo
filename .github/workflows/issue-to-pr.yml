@@ -1,0 +1,87 @@
+name: Issue to Pull Request
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-branch-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create branch from issue
+        id: create-branch
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          # Sanitise the issue title for use as a branch name
+          SANITISED=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-50)
+          BRANCH="issue-${ISSUE_NUMBER}/${SANITISED}"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Only create the branch if it does not already exist
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            echo "Branch '${BRANCH}' already exists – skipping creation."
+          else
+            git checkout -b "$BRANCH"
+            git push origin "$BRANCH"
+            echo "Branch '${BRANCH}' created and pushed."
+          fi
+
+      - name: Create or update pull request
+        uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ steps.create-branch.outputs.branch }}
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const branch     = process.env.BRANCH;
+            const base       = context.payload.repository.default_branch;
+            const prTitle    = `[Issue #${issue.number}] ${issue.title}`;
+            const prBody     = `Closes #${issue.number}\n\n---\n\n${issue.body ?? ''}`;
+
+            // Check whether a PR already exists for this branch
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              head:  `${context.repo.owner}:${branch}`,
+              state: 'open',
+            });
+
+            if (prs.length > 0) {
+              // Update the existing PR title/body to reflect any edits to the issue
+              await github.rest.pulls.update({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                pull_number:  prs[0].number,
+                title:        prTitle,
+                body:         prBody,
+              });
+              core.info(`Updated existing PR #${prs[0].number}`);
+            } else {
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                title: prTitle,
+                body:  prBody,
+                head:  branch,
+                base:  base,
+                draft: true,
+              });
+              core.info(`Created PR #${pr.number}: ${pr.html_url}`);
+            }
