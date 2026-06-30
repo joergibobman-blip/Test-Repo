@@ -31,9 +31,19 @@ jobs:
 
           # Only create the branch if it does not already exist
           if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
-            echo "Branch '${BRANCH}' already exists – skipping creation."
+            echo "Branch '${BRANCH}' already exists."
+            # Fetch the branch and check whether it has any commits ahead of the current HEAD
+            git fetch origin "$BRANCH"
+            AHEAD=$(git rev-list --count "HEAD..FETCH_HEAD")
+            if [ "$AHEAD" -eq 0 ]; then
+              echo "Branch has no commits ahead of main – adding an initial commit."
+              git checkout -b "$BRANCH" FETCH_HEAD
+              git commit --allow-empty -m "chore: initialise branch for issue #${ISSUE_NUMBER}"
+              git push origin "$BRANCH"
+            fi
           else
             git checkout -b "$BRANCH"
+            git commit --allow-empty -m "chore: initialise branch for issue #${ISSUE_NUMBER}"
             git push origin "$BRANCH"
             echo "Branch '${BRANCH}' created and pushed."
           fi
